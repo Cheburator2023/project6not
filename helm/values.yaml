@@ -1,0 +1,138 @@
+# Values for "notification" for ds1-lpad01 environment.
+
+replicaCount: 1
+pullSecret: ci-dos
+
+image:
+  repository: nexus-ci.corp.dev.vtb/sumd-docker-lib/os-notification
+  tag: v37-tc
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "400Mi"
+  limits:
+    cpu: "200m"
+    memory: "800Mi"
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: notification-ds1-lpad01-sumd-system.apps.ds1-lpad01.corp.dev.vtb
+      paths:
+        - pathType: ImplementationSpecific
+          backend:
+            service:
+              name: notification
+              port:
+                number: 5025
+  tls:
+    - secretName: notification-tls
+      hosts:
+        - notification-ds1-lpad01-sumd-system.apps.ds1-lpad01.corp.dev.vtb
+
+###Выбор worker ноды без GPU
+affinity:
+  enabled: false
+#  nodeAffinity:
+#    requiredDuringSchedulingIgnoredDuringExecution:
+#      nodeSelectorTerms:
+#        - matchExpressions:
+#            - key: nvidia.com/gpu.product
+#              operator: DoesNotExist
+
+secrets:
+  immutable:
+    enabled: true
+
+### Выбор политики для автоскалирования количества подов - разкомментить требуемое
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  # targetCPUUtilizationPercentage: 80
+  # targetCPUAverageValue: 100m
+  # targetMemoryUtilizationPercentage: 80
+  # targetMemoryAverageValue: 200Mi
+
+env:
+  smtp_relay_host: "post.dev.vtb.ru"
+  smtp_relay_port: "587"
+  is_external_smtp_relay: 'False'
+  enable_authentication: 'True'
+  task_soft_time_limit: '300'
+  task_time_limit: '600'
+  max_retries: '10'
+  time_to_retries: '180'
+  time_to_retries_range: '30'
+  notify_path_to_log: "/app/logs/log-notification"
+  redis_host: "d5sumd-rdc001lk.corp.dev.vtb"
+  redis_port: '6379'
+  redis_healthcheck_interval: '30'
+  cache_prefix: "notification-service"
+  redis_message_ttl: '43200'
+  email_from: "sum_notification@dev.vtb.ru" # почтовый адрес для учетки
+  logging_level: "DEBUG"
+  logs_directory: "/app/logs"
+
+secret:
+  email_login: "sum_notification@corp.dev.vtb"  # учетка для аутентификации
+  email_password: "L&x2DPP6rwgdxh(i"
+  redis_password: "SUD2AelAJTNkv4RqYxcTbAWrdeSGV9HHb0KWYlfma1M0jgOJw6"
+
+logging:
+  enabled: false
+  fluentd:
+    docker:
+      name: fluentd-agent
+      repository: nexus-ci.corp.dev.vtb/sumd-docker-lib/fluentd
+      tag: latest
+      pullPolicy: IfNotPresent
+    env:
+      FLUENT_UID: 0
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "50Mi"
+      limits:
+        cpu: "100m"
+        memory: "100Mi"
+    elasticsearch:
+      host: dmdrpc-apc006ln.corp.dev.vtb
+      port: 9200
+      user: agent_1661_write
+      password: agent_1661_write
+      index: 1661__notification
+      logstash_format: true
+      ssl_verify: false
+      #buffer:
+      #  flushMode: interval
+    livenessprobe:
+      enabled: false
+      initialdelayseconds: 600
+      periodseconds: 60
+  logrotate:
+    enabled: false
+    docker:
+      name: logrotate
+      repository: nexus-ci.corp.dev.vtb/sumd-docker-lib/misc
+      tag: latest
+      pullPolicy: IfNotPresent
+    env:
+      LOGROTATE_SIZE: 40M
+      LOGROTATE_COMPRESSION: compress
+      LOGROTATE_CRON: 0 0 * * *
+      LOGROTATE_DIRECTORY: /app/logs
+      LOGROTATE_ROTATE: 1
+      LOGROTATE_DELETION_MTIME: +0
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "100Mi"
+      limits:
+        cpu: "100m"
+        memory: "200Mi"

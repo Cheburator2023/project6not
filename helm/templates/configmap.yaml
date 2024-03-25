@@ -1,0 +1,31 @@
+{{- if .Values.logging.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "notification.fullname" . }}-fluent-agent-config
+  labels:
+      {{- include "notification.labels" . | nindent 4 }}
+data:
+  fluent.conf: |-
+    <source>
+      @type tail
+      path "/app/logs/*.log"
+      pos_file "/app/logs/file.log.pos"
+      tag "notification"
+      <parse>
+        @type none
+      </parse>
+    </source>
+    <match notification>
+      @type opensearch
+      hosts {{ .Values.logging.fluentd.elasticsearch.host }}
+      user "#{ENV['FLUENTD_USER']}"
+      password "#{ENV['FLUENTD_PWD']}"
+      scheme https
+      ssl_verify {{ .Values.logging.fluentd.elasticsearch.ssl_verify }}
+      logstash_format {{ .Values.logging.fluentd.elasticsearch.logstash_format }}
+      logstash_prefix {{ .Values.logging.fluentd.elasticsearch.index }}
+      include_timestamp true
+      reconnect_on_error true
+    </match>
+{{- end }}

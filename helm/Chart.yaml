@@ -1,0 +1,4 @@
+apiVersion: v1
+description: A Helm chart defining notification service.
+name: notification
+version: 0.0.1
