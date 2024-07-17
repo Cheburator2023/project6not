@@ -1,4 +1,4 @@
-let pullRequestRegexp = /^Pull request #\d+:.*/s;
+let pullRequestRegexp = /^Merge pull request #\d+:.*/s;
 module.exports = {
     extends: ['@commitlint/config-conventional'],
     ignores: [(commit) => pullRequestRegexp.test(commit)],
