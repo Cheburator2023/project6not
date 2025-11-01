@@ -61,3 +61,9 @@ class Configuration:
     # LOGGING CONFIG #
     LOGGING_LEVEL = os.getenv('logging_level', 'INFO')
     LOGS_DIRECTORY = os.environ.get("logs_directory", "")  # /app/logs
+
+    # TSLG CONFIG #
+    TSLG_AGENT_HOST = os.getenv('TSLG_AGENT_HOST', 'tslg-agent-svc-main.dk1-sumd01-sumd-core.svc.cluster.local')
+    TSLG_AGENT_PORT = int(os.getenv('TSLG_AGENT_PORT', 5170))
+    TSLG_LOG_LEVEL = os.getenv('TSLG_LOG_LEVEL', 'INFO')
+    TSLG_CONSOLE_OUTPUT = get_env_bool('TSLG_CONSOLE_OUTPUT', True)

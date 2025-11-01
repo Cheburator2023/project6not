@@ -9,28 +9,52 @@ from app.config import Configuration as Conf
 os.environ['PYTHONWARNINGS'] = 'ignore:Unverified HTTPS request'
 UPLOAD_FOLDER = '/home/user/tmp'
 
+log_level = os.getenv('TSLG_LOG_LEVEL', 'INFO').upper()
+console_output = os.getenv('TSLG_CONSOLE_OUTPUT', 'true').lower() == 'true'
+
 log_config = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
         "main_format": {
+            "()": "app.logging.SanitizedFormatter",
             "format": "[%(asctime)s] [%(process)d] [%(levelname)s] in %(module)s: %(message)s",
             "datefmt": "%d-%m-%Y %H:%M:%S",
         },
         "logJSON": {
-            "()": "app.logging.JSONLogFormatter"
+            "()": "app.logging.TSLGJSONFormatter"
         },
+        "tslg_format": {
+            "()": "app.logging.SanitizedFormatter",
+            "format": "%(message)s"
+        }
     },
     "handlers": {
         "wsgi": {
             "class": "logging.StreamHandler",
-            "level": "INFO",
+            "level": log_level,
             "stream": "ext://flask.logging.wsgi_errors_stream",
             "formatter": "main_format",
         },
+        "tslg": {
+            "()": "app.tslg_handler.TSLGHandler",
+            "level": log_level,
+            "formatter": "tslg_format",
+        }
     },
-    "root": {"level": Conf.LOGGING_LEVEL, "handlers": ["wsgi"]},
+    "root": {
+        "level": log_level,
+        "handlers": ["tslg"] + (["wsgi"] if console_output else [])
+    },
+    "loggers": {
+        "app": {
+            "level": log_level,
+            "handlers": ["tslg"] + (["wsgi"] if console_output else []),
+            "propagate": False
+        }
+    }
 }
+
 if Conf.LOGS_DIRECTORY:
     logs_dir: Path = Path(Conf.LOGS_DIRECTORY)
     if not logs_dir.exists():
@@ -46,6 +70,7 @@ if Conf.LOGS_DIRECTORY:
     }
     log_config["handlers"].update(file_handler)
     log_config["root"]["handlers"].append(handler_name)
+
 dictConfig(log_config)
 
 app = Flask(__name__)
