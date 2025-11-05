@@ -50,8 +50,8 @@ spec:
                 fieldRef:
                   fieldPath: status.podIP
           {{- range $key, $val := .Values.env }}
-          - name: {{ $key }}
-            value: {{ $val | quote }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
           {{- end }}
           envFrom:
             - secretRef:
