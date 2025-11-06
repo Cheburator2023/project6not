@@ -101,7 +101,10 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 from app import mail_routs
 
-app.logger.info("TSLG logging configured successfully")
-app.logger.info(f"TSLG Agent: {os.getenv('TSLG_AGENT_HOST', 'tslg-agent-svc-main.dk1-sumd01-sumd-core.svc.cluster.local')}:{os.getenv('TSLG_AGENT_PORT', '5170')}")
-app.logger.info(f"Buffer size: {os.getenv('TSLG_MAX_BUFFER_SIZE', '500')}, Flush interval: {os.getenv('TSLG_BUFFER_FLUSH_INTERVAL_MS', '100')}ms")
-app.logger.info(f"Console output: {console_output}, Log level: {log_level}"
+@app.before_first_request
+def log_initialization():
+    app.logger.info("TSLG logging configured successfully")
+    app.logger.info(f"TSLG Agent: {os.getenv('TSLG_AGENT_HOST', 'tslg-agent-svc-main.dk1-sumd01-sumd-core.svc.cluster.local')}:{os.getenv('TSLG_AGENT_PORT', '5170')}")
+    app.logger.info(f"Buffer size: {os.getenv('TSLG_MAX_BUFFER_SIZE', '500')}, Flush interval: {os.getenv('TSLG_BUFFER_FLUSH_INTERVAL_MS', '100')}ms")
+    app.logger.info(f"Console output: {console_output}, Log level: {log_level}")
+    app.logger.info("Test message: TSLG logging is working correctly")
