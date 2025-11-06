@@ -10,11 +10,12 @@ from flask import Flask
 
 from app.config import Configuration as Conf
 from app.tslg_handler import TSLGBufferedSocketHandler, TSLGJSONLogFormatter
-from app.logging import JSONLogFormatter
+from app.json_formatter import JSONLogFormatter
 
 os.environ['PYTHONWARNINGS'] = 'ignore:Unverified HTTPS request'
 UPLOAD_FOLDER = '/home/user/tmp'
 
+# Базовая конфигурация логирования
 log_config = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -75,7 +76,13 @@ if tslg_agent_host:
     )
 
     tslg_log_level = os.getenv('TSLG_LOG_LEVEL', 'info').upper()
-    tslg_handler.setLevel(getattr(logging, tslg_log_level, logging.INFO))
+
+    try:
+        log_level = getattr(logging, tslg_log_level)
+    except AttributeError:
+        log_level = logging.INFO
+
+    tslg_handler.setLevel(log_level)
 
     tslg_formatter = TSLGJSONLogFormatter()
     tslg_handler.setFormatter(tslg_formatter)
