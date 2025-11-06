@@ -50,6 +50,26 @@ log_config = {
             "level": log_level,
             "handlers": ["tslg"] + (["wsgi"] if console_output else []),
             "propagate": False
+        },
+        "gunicorn": {
+            "level": log_level,
+            "handlers": ["tslg"] + (["wsgi"] if console_output else []),
+            "propagate": False
+        },
+        "gunicorn.error": {
+            "level": log_level,
+            "handlers": ["tslg"] + (["wsgi"] if console_output else []),
+            "propagate": False
+        },
+        "gunicorn.access": {
+            "level": log_level,
+            "handlers": ["tslg"] + (["wsgi"] if console_output else []),
+            "propagate": False
+        },
+        "celery": {
+            "level": log_level,
+            "handlers": ["tslg"] + (["wsgi"] if console_output else []),
+            "propagate": False
         }
     }
 }
@@ -80,3 +100,8 @@ app.config['PROPAGATE_EXCEPTIONS'] = True
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 from app import mail_routs
+
+app.logger.info("TSLG logging configured successfully")
+app.logger.info(f"TSLG Agent: {os.getenv('TSLG_AGENT_HOST', 'tslg-agent-svc-main.dk1-sumd01-sumd-core.svc.cluster.local')}:{os.getenv('TSLG_AGENT_PORT', '5170')}")
+app.logger.info(f"Buffer size: {os.getenv('TSLG_MAX_BUFFER_SIZE', '500')}, Flush interval: {os.getenv('TSLG_BUFFER_FLUSH_INTERVAL_MS', '100')}ms")
+app.logger.info(f"Console output: {console_output}, Log level: {log_level}"

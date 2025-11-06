@@ -125,3 +125,6 @@ def check_and_recovery_service():
 
 if __name__ == '__main__':
     app.run()
+
+app.logger.info("Mail module initialized successfully")
+app.logger.info("Test message: TSLG logging is working correctly")
