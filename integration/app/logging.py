@@ -6,7 +6,7 @@ import logging
 class JSONLogFormatter(logging.Formatter):
 
     def __init__(self) -> None:
-        pass
+        super().__init__()
 
     def _format_date_time(self, now) -> str:
         return (

@@ -9,7 +9,8 @@ import logging
 from flask import Flask
 
 from app.config import Configuration as Conf
-from app.tslg_logging import TSLGBufferedSocketHandler, TSLGJSONLogFormatter
+from app.tslg_handler import TSLGBufferedSocketHandler, TSLGJSONLogFormatter
+from app.logging import JSONLogFormatter
 
 os.environ['PYTHONWARNINGS'] = 'ignore:Unverified HTTPS request'
 UPLOAD_FOLDER = '/home/user/tmp'
@@ -23,10 +24,10 @@ log_config = {
             "datefmt": "%d-%m-%Y %H:%M:%S",
         },
         "logJSON": {
-            "()": "app.logging.JSONLogFormatter"
+            "()": JSONLogFormatter
         },
         "tslg": {
-            "()": "app.tslg_logging.TSLGJSONLogFormatter"
+            "()": TSLGJSONLogFormatter
         },
     },
     "handlers": {
@@ -58,31 +59,33 @@ if Conf.LOGS_DIRECTORY:
 
 dictConfig(log_config)
 
-log_queue = queue.Queue(maxsize=10000)
+tslg_agent_host = os.getenv('TSLG_AGENT_HOST')
+if tslg_agent_host:
+    log_queue = queue.Queue(maxsize=10000)
 
-tslg_handler = TSLGBufferedSocketHandler(
-    host=os.getenv('TSLG_AGENT_HOST', 'tslg-agent-svc-main.dk1-sumd01-sumd-core.svc.cluster.local'),
-    port=int(os.getenv('TSLG_AGENT_PORT', '5170')),
-    max_buffer_size=int(os.getenv('TSLG_MAX_BUFFER_SIZE', '500')),
-    flush_interval_ms=int(os.getenv('TSLG_BUFFER_FLUSH_INTERVAL_MS', '100')),
-    connection_ttl_ms=int(os.getenv('TSLG_CONNECTION_TTL_MS', '2000')),
-    reconnection_delay_ms=int(os.getenv('TSLG_RECONNECTION_DELAY_MS', '2000')),
-    socket_timeout_ms=int(os.getenv('TSLG_SOCKET_TIMEOUT_MS', '5000')),
-    max_connection_attempts=int(os.getenv('TSLG_MAX_CONNECTION_ATTEMPTS', '10'))
-)
+    tslg_handler = TSLGBufferedSocketHandler(
+        host=tslg_agent_host,
+        port=int(os.getenv('TSLG_AGENT_PORT', '5170')),
+        max_buffer_size=int(os.getenv('TSLG_MAX_BUFFER_SIZE', '500')),
+        flush_interval_ms=int(os.getenv('TSLG_BUFFER_FLUSH_INTERVAL_MS', '100')),
+        connection_ttl_ms=int(os.getenv('TSLG_CONNECTION_TTL_MS', '2000')),
+        reconnection_delay_ms=int(os.getenv('TSLG_RECONNECTION_DELAY_MS', '2000')),
+        socket_timeout_ms=int(os.getenv('TSLG_SOCKET_TIMEOUT_MS', '5000')),
+        max_connection_attempts=int(os.getenv('TSLG_MAX_CONNECTION_ATTEMPTS', '10'))
+    )
 
-tslg_log_level = os.getenv('TSLG_LOG_LEVEL', 'info').upper()
-tslg_handler.setLevel(getattr(logging, tslg_log_level, logging.INFO))
+    tslg_log_level = os.getenv('TSLG_LOG_LEVEL', 'info').upper()
+    tslg_handler.setLevel(getattr(logging, tslg_log_level, logging.INFO))
 
-tslg_formatter = TSLGJSONLogFormatter()
-tslg_handler.setFormatter(tslg_formatter)
+    tslg_formatter = TSLGJSONLogFormatter()
+    tslg_handler.setFormatter(tslg_formatter)
 
-queue_listener = QueueListener(log_queue, tslg_handler)
-queue_listener.start()
+    queue_listener = QueueListener(log_queue, tslg_handler)
+    queue_listener.start()
 
-root_logger = logging.getLogger()
-queue_handler = QueueHandler(log_queue)
-root_logger.addHandler(queue_handler)
+    root_logger = logging.getLogger()
+    queue_handler = QueueHandler(log_queue)
+    root_logger.addHandler(queue_handler)
 
 app = Flask(__name__)
 app.config.from_object(Conf)
@@ -91,7 +94,8 @@ app.config.from_object(Conf)
 app.config['PROPAGATE_EXCEPTIONS'] = True
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-app.logger.info("TSLG logging configured successfully")
-app.logger.info(f"TSLG Agent: {os.getenv('TSLG_AGENT_HOST')}:{os.getenv('TSLG_AGENT_PORT')}")
+if tslg_agent_host:
+    app.logger.info("TSLG logging configured successfully")
+    app.logger.info(f"TSLG Agent: {tslg_agent_host}:{os.getenv('TSLG_AGENT_PORT')}")
 
 from app import mail_routs

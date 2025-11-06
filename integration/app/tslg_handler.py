@@ -8,8 +8,6 @@ import threading
 from datetime import datetime
 import random
 import re
-from logging.handlers import QueueHandler, QueueListener
-import queue
 
 class TSLGBufferedSocketHandler(logging.Handler):
     def __init__(self, host, port, max_buffer_size=500, flush_interval_ms=100,
