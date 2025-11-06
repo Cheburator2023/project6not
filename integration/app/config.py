@@ -1,7 +1,6 @@
 import os
 from distutils.util import strtobool
 
-
 def get_env_bool(name: str, default: bool = False) -> bool:
     value = os.getenv(name, default)
     try:
@@ -9,7 +8,6 @@ def get_env_bool(name: str, default: bool = False) -> bool:
     except ValueError:
         value = default
     return bool(value)
-
 
 class Configuration:
     # SMTP CONFIG #
@@ -64,6 +62,16 @@ class Configuration:
 
     # TSLG CONFIG #
     TSLG_AGENT_HOST = os.getenv('TSLG_AGENT_HOST', 'tslg-agent-svc-main.dk1-sumd01-sumd-core.svc.cluster.local')
-    TSLG_AGENT_PORT = int(os.getenv('TSLG_AGENT_PORT', 5170))
-    TSLG_LOG_LEVEL = os.getenv('TSLG_LOG_LEVEL', 'INFO')
+    TSLG_AGENT_PORT = int(os.getenv('TSLG_AGENT_PORT', '5170'))
+    TSLG_RECONNECTION_DELAY_MS = int(os.getenv('TSLG_RECONNECTION_DELAY_MS', '2000'))
+    TSLG_CONNECTION_TTL_MS = int(os.getenv('TSLG_CONNECTION_TTL_MS', '2000'))
+    TSLG_CLIENT_VERSION = os.getenv('TSLG_CLIENT_VERSION', '1.0.0')
+    TSLG_ENABLE_TRACE_FIELDS = get_env_bool('TSLG_ENABLE_TRACE_FIELDS', True)
+    TSLG_MAX_BUFFER_SIZE = int(os.getenv('TSLG_MAX_BUFFER_SIZE', '500'))
+    TSLG_SOCKET_TIMEOUT_MS = int(os.getenv('TSLG_SOCKET_TIMEOUT_MS', '5000'))
     TSLG_CONSOLE_OUTPUT = get_env_bool('TSLG_CONSOLE_OUTPUT', True)
+    TSLG_ENABLE_FULL_CONTEXT = get_env_bool('TSLG_ENABLE_FULL_CONTEXT', True)
+    TSLG_BUFFER_FLUSH_INTERVAL_MS = int(os.getenv('TSLG_BUFFER_FLUSH_INTERVAL_MS', '100'))
+    TSLG_MAX_CONNECTION_ATTEMPTS = int(os.getenv('TSLG_MAX_CONNECTION_ATTEMPTS', '10'))
+    TSLG_SANITIZE_SENSITIVE_DATA = get_env_bool('TSLG_SANITIZE_SENSITIVE_DATA', True)
+    TSLG_LOG_LEVEL = os.getenv('TSLG_LOG_LEVEL', 'info')
