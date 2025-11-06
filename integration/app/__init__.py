@@ -25,8 +25,7 @@ log_config = {
             "()": "app.logging.TSLGJSONFormatter"
         },
         "tslg_format": {
-            "()": "app.logging.SanitizedFormatter",
-            "format": "%(message)s"
+            "()": "app.logging.TSLGJSONFormatter"
         }
     },
     "handlers": {
@@ -34,7 +33,7 @@ log_config = {
             "class": "logging.StreamHandler",
             "level": log_level,
             "stream": "ext://flask.logging.wsgi_errors_stream",
-            "formatter": "main_format",
+            "formatter": "tslg_format",
         },
         "tslg": {
             "()": "app.tslg_handler.TSLGHandler",

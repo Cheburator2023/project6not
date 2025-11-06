@@ -9,6 +9,9 @@ from datetime import datetime
 from queue import Queue, Empty
 from logging import Handler, LogRecord
 
+from app.logging import sanitize_message
+
+
 class TSLGHandler(Handler):
     def __init__(self):
         super().__init__()
@@ -43,30 +46,7 @@ class TSLGHandler(Handler):
         self.flush_thread = threading.Thread(target=self._flush_worker, daemon=True)
         self.flush_thread.start()
 
-    def _sanitize_data(self, text):
-        """Sanitize sensitive data in log messages"""
-        if not self.sanitize_sensitive_data or not text:
-            return text
-
-        import re
-        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-        text = re.sub(email_pattern, '[EMAIL_REDACTED]', text)
-
-        password_patterns = [
-            r'password[=:]\s*[^\s]+',
-            r'pwd[=:]\s*[^\s]+',
-            r'token[=:]\s*[^\s]+',
-            r'api[_-]?key[=:]\s*[^\s]+',
-            r'auth[=:]\s*[^\s]+'
-        ]
-
-        for pattern in password_patterns:
-            text = re.sub(pattern, lambda m: m.group().split('=')[0] + '=[REDACTED]', text, flags=re.IGNORECASE)
-
-        return text
-
-    def _create_log_record(self, record):
-        """Create TSLG-compliant log record"""
+    def _get_level_mapping(self, level):
         level_mapping = {
             'DEBUG': 'DEBUG',
             'INFO': 'INFO',
@@ -74,18 +54,21 @@ class TSLGHandler(Handler):
             'ERROR': 'ERROR',
             'CRITICAL': 'FATAL'
         }
+        return level_mapping.get(level, 'INFO')
+
+    def _create_log_record(self, record):
+        """Create TSLG-compliant log record"""
 
         log_data = {
             "eventId": str(uuid.uuid4()),
             "appName": self.app_name,
-            "level": level_mapping.get(record.levelname, 'INFO'),
-            "text": self._sanitize_data(record.getMessage()),
+            "level": self._get_level_mapping(record.levelname),
+            "text": sanitize_message(record.getMessage()) if self.sanitize_sensitive_data else record.getMessage(),
             "localTime": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z',
             "namespace": self.namespace,
             "risCode": self.ris_code,
             "projectCode": self.project_code,
             "tslgClientVersion": self.client_version,
-
             "appType": "PYTHON",
             "envType": "K8S",
             "agrType": "TRACING",
